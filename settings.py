@@ -1,12 +1,16 @@
 from pydantic_settings import BaseSettings
 
 
-class Settings(BaseSettings):
-    POSTGRESS_USER: str
-    POSTGRESS_PASSWORD: str
-    POSTGRESS_HOST: str
-    POSTGRESS_PORT: str
-    POSTGRESS_DB: str
+class Secrets(BaseSettings):
+    PG_USER: str
+    PG_PASSWORD: str
+    PG_HOST: str
+    PG_PORT: str
+    PG_DB: str
+    SECRET_KEY: str
+
+    class Config:
+        env_file = ".env"
 
 
-settings = Settings()
+secrets = Secrets()
