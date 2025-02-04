@@ -6,9 +6,7 @@ from errors import AlreadyExistsError
 import uuid
 from models import UserResponse
 
-engine = create_engine(
-    f"postgresql+psycopg://{secrets.PG_USER}:{secrets.PG_PASSWORD}@{secrets.PG_HOST}:{secrets.PG_PORT}/{secrets.PG_DB}"
-)
+engine = create_engine(secrets.generate_db_url())
 
 
 class Base(DeclarativeBase):
