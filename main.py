@@ -121,3 +121,7 @@ async def read_users_me(
 ):
 
     return current_user
+
+@app.get('/love')
+async love():
+    return 'Halia I love You!!!! ❤️❤️❤️'
