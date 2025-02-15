@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 15b3a5fd98cc
+Revision ID: afedff58ce3f
 Revises: 
-Create Date: 2025-02-08 10:12:59.882087
+Create Date: 2025-02-15 11:40:18.027703
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "15b3a5fd98cc"
+revision: str = "afedff58ce3f"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,8 +26,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("title", name="uq_group_title"),
     )
-
     op.create_table(
         "user_table",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -35,8 +35,8 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(), nullable=False),
         sa.Column("disabled", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("email", name="uq_user_email"),
     )
-
     op.create_table(
         "user_group_association_table",
         sa.Column("user_id", sa.Uuid(), nullable=False),

@@ -19,7 +19,7 @@ from settings import secrets
 from internal import internal_router
 
 
-app = FastAPI(title="Local iCloud", openapi_prefix="/api/v1")
+app = FastAPI(title="Local iCloud", root_path="/api/v1")
 
 
 app.include_router(user.router)

@@ -19,7 +19,7 @@ from auth.models import User, SuperUser
 
 def login_required(
     request: Request,
-    http_bearer: Annotated[HTTPAuthorizationCredentials | None, Depends(HTTP_BEARER)],
+    http_bearer: Annotated[HTTPAuthorizationCredentials, Depends(HTTP_BEARER)],
 ) -> None:
     if secrets.DEBUG:
         user = SuperUser()

@@ -24,9 +24,7 @@ class BaseRepository(Generic[T], ABC):
                 self.db.flush()
         except sa.exc.IntegrityError as e:
             self.db.rollback()
-            import ipdb
 
-            ipdb.set_trace()
             raise AlreadyExistsError(f"Integrity error: {str(e.orig)}") from e
         return entity
 

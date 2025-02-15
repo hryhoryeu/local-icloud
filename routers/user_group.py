@@ -6,13 +6,20 @@ from sqlalchemy import orm as so
 from schemas.user_group import UserGroup, UserGroupResponse
 from database import get_db
 from services.user_group import UserGroupService
+from auth.permissions import HasAny
+from auth.user import login_required
+from constants import Groups
 
-router = APIRouter(prefix="/user-group", tags=["User Group"])
+router = APIRouter(
+    prefix="/user-group",
+    tags=["User Group"],
+    dependencies=[Depends(login_required), Depends(HasAny(Groups.ADMIN.value))],
+)
 
 
 @router.post(
     "/create",
-    responses={409: {"description": "User Group already exists"}},
+    responses={status.HTTP_409_CONFLICT: {"description": "User Group already exists"}},
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user_group(

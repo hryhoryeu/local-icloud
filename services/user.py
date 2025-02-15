@@ -5,6 +5,8 @@ from schemas.user import User, UserResponse, UserInDB
 from models.user import DBUser
 from repositories.user import UserRepository
 from services.base_service import BaseService
+from constants import LOOKER_GROUP_ID
+from errors import UnauthorizedError
 
 
 class UserService(BaseService[User, UserResponse, UserRepository]):
@@ -21,6 +23,7 @@ class UserService(BaseService[User, UserResponse, UserRepository]):
         db_user = DBUser(**user_dict)
 
         db_user = self.repo.create_or_update(entity=db_user)
+        self.repo.assign_group(user_id=db_user.id, group_id=LOOKER_GROUP_ID)
 
         self.db.commit()
 
@@ -41,4 +44,6 @@ class UserService(BaseService[User, UserResponse, UserRepository]):
     def get_by_email(self, *, email: str) -> UserInDB:
         db_user = self.repo.get_by_email(email=email)
 
-        return UserInDB.model_validate(db_user)
+        if db_user:
+            return UserInDB.model_validate(db_user)
+        raise UnauthorizedError(detail="Incorrect email or password")
