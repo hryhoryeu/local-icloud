@@ -1,20 +1,21 @@
+from typing import Annotated
+from datetime import datetime, timedelta, timezone
+
 from argon2 import PasswordHasher
 import sqlalchemy as sa
 from sqlalchemy import orm as so
-from database import engine, User
-from models import UserInDB, UserResponse
-import jwt
-from jwt.exceptions import InvalidTokenError
-from settings import secrets
-from datetime import datetime, timedelta, timezone
-from errors import UnauthorizedError, BadRequestError, PermissionDenied
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer
-from typing import Annotated
+from fastapi.security import HTTPBearer
+import jwt
+
+from database import engine
+from schemas.user import UserInDB, UserResponse
+from models.user import DBUser
+from settings import secrets
+from errors import UnauthorizedError, BadRequestError
 from constants import ALGORITHM
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 security = HTTPBearer()
 
 
@@ -30,7 +31,7 @@ def verify_password(hashed_password: str, plain_password: str) -> bool:
 
 def get_user(email: str) -> UserInDB:
     with so.Session(engine) as session:
-        user = session.execute(sa.select(User).filter(User.email == email)).scalar()
+        user = session.execute(sa.select(DBUser).filter(DBUser.email == email)).scalar()
     return UserInDB.model_validate(user)
 
 
@@ -64,7 +65,7 @@ def get_current_user(credentials: Annotated[str, Depends(security)]):
         email: str = payload.get("sub")
         if email is None:
             raise credential_exception
-    except InvalidTokenError:
+    except jwt.exceptionsInvalidTokenError:
         raise credential_exception
     user = get_user(email=email)
     import ipdb
@@ -77,12 +78,7 @@ def get_current_user(credentials: Annotated[str, Depends(security)]):
 
 async def get_current_active_user(
     current_user: Annotated[UserInDB, Depends(get_current_user)]
-) -> UserInDB:
+) -> UserResponse:
     if current_user.disabled:
         raise BadRequestError(detail="Inactive user.")
     return UserResponse(**current_user.model_dump())
-
-
-async def is_superuser(user: Annotated[UserResponse, Depends(get_current_active_user)]):
-    if not user.is_superuser:
-        raise PermissionDenied(detail=f"{user.email} is not superuser.")
