@@ -15,4 +15,5 @@ dependencies = [
     "pydantic-settings>=2.7.1",
     "pyjwt>=2.10.1",
     "sqlalchemy>=2.0.37",
+    "structlog>=25.1.0",
 ]

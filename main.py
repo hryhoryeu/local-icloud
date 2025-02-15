@@ -1,18 +1,42 @@
-from fastapi import FastAPI, File, UploadFile, Form, Depends
-from fastapi.responses import FileResponse
-from PIL import Image
+from datetime import timedelta
 from pathlib import Path
 from typing import List, Annotated
-from models import User, Token, UserForm, UserInDB
+
+from sqlalchemy import orm as so
+from fastapi import FastAPI, File, UploadFile, Form, Depends, Request
+from fastapi.responses import FileResponse
+from PIL import Image
+
+from auth.tokens import Token
+from auth.user import authenticate_user, create_access_token
+from schemas.user import UserForm
 from errors import UnauthorizedError
-from users import authenticate_user, create_access_token, get_current_active_user
 from constants import ACCESS_TOKEN_EXPIRE_MINUTES
-from datetime import timedelta
+from routers import user, user_group
+from database import get_db
+from mappers import groups_to_list_mapper
+from settings import secrets
+from internal import internal_router
 
-from database import create_db, get_all_users, create_user as user_create
+
+app = FastAPI(title="Local iCloud", root_path="/api/v1")
 
 
-app = FastAPI()
+app.include_router(user.router)
+app.include_router(user_group.router)
+if secrets.DEBUG:
+    app.include_router(internal_router)
+
+
+@app.middleware("http")
+async def bypass_auth_debug(request: Request, call_next):
+    if secrets.DEBUG:
+        headers = dict(request.scope["headers"])
+        headers[b"authorization"] = b"Bearer debug-token"
+        request.scope["headers"] = [(k, v) for k, v in headers.items()]
+
+    return await call_next(request)
+
 
 # Paths for storing images
 UPLOAD_DIR = Path("uploads")
@@ -84,44 +108,16 @@ async def read_root():
     return {"message": "Welcome to the Image Upload API"}
 
 
-@app.post(
-    "/create-user",
-    responses={409: {"description": "User already exists"}},
-    status_code=201,
-)
-async def create_user(user: User):
-    return user_create(**user.model_dump())
-
-
-@app.get("/get-users")
-async def get_users():
-    return get_all_users()
-
-
-@app.get("/create-tables")
-async def create_tables():
-    return create_db()
-
-
 @app.post("/token", responses={401: {"description": "Incorrect username or password"}})
-async def login_for_access_token(form_data: Annotated[UserForm, Form()]):
-    user = authenticate_user(form_data.email, form_data.password)
+async def login_for_access_token(
+    form_data: Annotated[UserForm, Form()], db: Annotated[so.Session, Depends(get_db)]
+):
+    user = authenticate_user(email=form_data.email, password=form_data.password, db=db)
     if not user:
         raise UnauthorizedError(detail="Incorrect username or password")
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": user.email, "groups": groups_to_list_mapper(user.groups)},
+        expires_delta=access_token_expires,
     )
     return Token(access_token=access_token, token_type="bearer")
-
-
-@app.get("/users/me")
-async def read_users_me(
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
-):
-
-    return current_user
-
-@app.get('/love')
-async def love():
-    return 'Halia I love You!!!! ❤️❤️❤️'
