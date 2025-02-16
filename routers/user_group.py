@@ -13,7 +13,10 @@ from constants import Groups
 router = APIRouter(
     prefix="/user-group",
     tags=["User Group"],
-    dependencies=[Depends(login_required), Depends(HasAny(Groups.ADMIN.value))],
+    dependencies=[
+        Depends(login_required),
+        Depends(HasAny(Groups.ADMIN.value)),
+    ],
 )
 
 

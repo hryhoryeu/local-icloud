@@ -83,7 +83,10 @@ async def upload_files(files: List[UploadFile] = File(...)):
             }
         )
 
-    return {"message": "Files uploaded and processed successfully!", "files": results}
+    return {
+        "message": "Files uploaded and processed successfully!",
+        "files": results,
+    }
 
 
 @app.get("/images/{image_type}/{filename}")
@@ -108,9 +111,13 @@ async def read_root():
     return {"message": "Welcome to the Image Upload API"}
 
 
-@app.post("/token", responses={401: {"description": "Incorrect username or password"}})
+@app.post(
+    "/token",
+    responses={401: {"description": "Incorrect username or password"}},
+)
 async def login_for_access_token(
-    form_data: Annotated[UserForm, Form()], db: Annotated[so.Session, Depends(get_db)]
+    form_data: Annotated[UserForm, Form()],
+    db: Annotated[so.Session, Depends(get_db)],
 ):
     user = authenticate_user(email=form_data.email, password=form_data.password, db=db)
     if not user:
