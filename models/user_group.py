@@ -17,7 +17,9 @@ class DBUserGroup(Base):
     title: so.Mapped[str]
 
     users: so.Mapped[list["DBUser"]] = so.relationship(
-        "DBUser", secondary=user_group_association_table, back_populates="groups"
+        "DBUser",
+        secondary=user_group_association_table,
+        back_populates="groups",
     )
 
     __table_args__ = (sa.UniqueConstraint("title", name="uq_group_title"),)

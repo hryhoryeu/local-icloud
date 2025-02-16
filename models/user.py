@@ -20,7 +20,9 @@ class DBUser(Base):
     disabled: so.Mapped[bool] = so.mapped_column(default=False)
 
     groups: so.Mapped[list["DBUserGroup"]] = so.relationship(
-        "DBUserGroup", secondary=user_group_association_table, back_populates="users"
+        "DBUserGroup",
+        secondary=user_group_association_table,
+        back_populates="users",
     )
 
     __table_args__ = (sa.UniqueConstraint("email", name="uq_user_email"),)
